@@ -19,6 +19,7 @@ Dataset: https://humansintheloop.org/resources/datasets/medical-mask-dataset/
 Data Analysis and Visualizations:
 Data Distribution: The dataset contains a total over 6000 images and 20 classes, and we have used only 900 images labeled as 'with_mask' and 900 images labeled as 'without_mask'. This distribution helps understand the class balance and potential biases, also accelerates the processing time.
 Prior to implementing the face mask detection system, we conducted a thorough data analysis to prepare and train a model using our dataset. This crucial step involved assessing the validation accuracy and uncovering underlying patterns within the data. 
+New dataset: https://drive.google.com/drive/folders/1FzVHCc0arH-KlsWlXWhEIBqBVNKD6dyt?usp=sharing
 
 Here are several visualizations generated during the data analysis phase:
 
