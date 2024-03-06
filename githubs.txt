@@ -1,0 +1,3 @@
+https://github.com/fuckence/face-mask-detection-system
+https://github.com/Ibranuraliev/adv-prog-final
+https://github.com/Dakengoi/Face_mask
