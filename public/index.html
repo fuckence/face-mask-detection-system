@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-time Mask Detection</title>
+  <style>
+    #video-container {
+      position: relative;
+      width: 600px;
+      margin: 0 auto;
+    }
+    #video {
+      width: 100%;
+      border: 1px solid #ccc;
+    }
+    #predictions {
+      margin-top: 10px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .cell {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body><center>
+  <h1>Real-time Mask Detection</h1>
+</center>
+  <div id="video-container">
+    <video id="video" autoplay></video>
+    <div id="predictions"></div>
+    <h4 id="status"></h4>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script>
+    const CLASSES = {
+      0: 'Mask',
+      1: 'No mask'
+    };
+
+    const MODEL_PATH = 'model.json'; 
+    const IMAGE_SIZE = 192;
+    const TOPK_PREDICTIONS = 2;
+
+    let my_model;
+
+    const demo = async () => {
+      status('Loading model...');
+
+      my_model = await tf.loadLayersModel(MODEL_PATH);
+
+      status('');
+
+      // Access the webcam video stream
+      const videoElement = document.getElementById('video');
+      const constraints = { video: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoElement.srcObject = stream;
+
+      // Continuously predict on each frame
+      videoElement.addEventListener('loadedmetadata', () => {
+        predict(videoElement);
+      });
+    };
+
+    /**
+     * Given a video element, continuously makes predictions through my_model on each frame.
+     */
+    async function predict(videoElement) {
+      const frame = await getFrame(videoElement);
+      const logits = tf.tidy(() => {
+        // Preprocess the frame
+        const img = tf.browser.fromPixels(frame).toFloat();
+        const normalized = img.div(255.0);
+        const batched = normalized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
+
+        // Make a prediction through my_model
+        return my_model.predict(batched);
+      });
+
+      // Convert logits to probabilities and class names
+      const classes = await getTopKClasses(logits, TOPK_PREDICTIONS);
+      showResults(classes);
+
+      // Schedule the next prediction
+      requestAnimationFrame(() => predict(videoElement));
+    }
+
+    /**
+     * Gets the current frame from a video element.
+     */
+    /**
+ * Gets the current frame from a video element and resizes it to match the expected input size.
+ */
+async function getFrame(videoElement) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 192; // Set to the expected input width
+  canvas.height = 192; // Set to the expected input height
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return imageData;
+}
+
+
+    /**
+     * Computes the probabilities of the topK classes given logits by computing
+     * softmax to get probabilities and then sorting the probabilities.
+     * @param logits Tensor representing the logits from my_model.
+     * @param topK The number of top predictions to show.
+     */
+    async function getTopKClasses(logits, topK) {
+      const values = await logits.data();
+
+      const valuesAndIndices = [];
+      for (let i = 0; i < values.length; i++) {
+        valuesAndIndices.push({ value: values[i], index: i });
+      }
+      valuesAndIndices.sort((a, b) => {
+        return b.value - a.value;
+      });
+      const topkValues = new Float32Array(topK);
+      const topkIndices = new Int32Array(topK);
+      for (let i = 0; i < topK; i++) {
+        topkValues[i] = valuesAndIndices[i].value;
+        topkIndices[i] = valuesAndIndices[i].index;
+      }
+
+      const topClassesAndProbs = [];
+      for (let i = 0; i < topkIndices.length; i++) {
+        topClassesAndProbs.push({
+          className: CLASSES[topkIndices[i]],
+          probability: topkValues[i]
+        });
+      }
+      return topClassesAndProbs;
+    }
+
+    //
+    // UI
+    //
+
+    function showResults(classes) {
+      const predictionsContainer = document.getElementById('predictions');
+      predictionsContainer.innerHTML = '';
+
+      for (let i = 0; i < classes.length; i++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        const classElement = document.createElement('div');
+        classElement.className = 'cell';
+        classElement.innerText = classes[i].className;
+        row.appendChild(classElement);
+
+        const probsElement = document.createElement('div');
+        probsElement.className = 'cell';
+        probsElement.innerText = `${(classes[i].probability * 100).toFixed(2)}%`;
+        row.appendChild(probsElement);
+
+        predictionsContainer.appendChild(row);
+      }
+    }
+
+    const demoStatusElement = document.getElementById('status');
+    const status = msg => demoStatusElement.innerText = msg;
+
+    demo();
+  </script>
+</body>
+</html>
