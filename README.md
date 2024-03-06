@@ -1,4 +1,9 @@
-youtube link:https://youtu.be/OS2nJHeVZzs
+Youtube link:https://youtu.be/OS2nJHeVZzs
+
+Configuration:
+Open the terminal and insert these commands:
+1.npm i
+2.node app.js
 
 Problem: 
 The Mask Detection System aims to build a system that detects whether individuals are wearing masks in images or live video streams. The goal is to enhance public safety by identifying compliance with mask-wearing guidelines, especially during situations like the COVID-19 pandemic. 
